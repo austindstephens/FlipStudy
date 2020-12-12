@@ -5,23 +5,45 @@ import json
 def main():
     """ """
 
-    prompt = ("0: exit\n"
+    prompt = ("\n0: exit\n"
               "1: create deck\n"
               "2: add card to deck\n"
-              "3: read deck")
+              "3: study deck\n"
+              "4: read deck from file\n")
 
-    print(prompt)
-
-
+    # Dictionary mapping deck names to Deck instances
+    decks = dict()
+    
     try:
+
+        # Print the prompt
+        print(prompt)
         sel = input("Selection: ")
         sel = int(sel)
 
         while sel:
-            # do stuff
 
+            # Create a new deck
+            if sel == 1:
+
+                name = input("Deck name: ")
+                decks[name] = Deck(name) 
+
+            # Add card to an existing deck
+            elif sel == 2:
+
+                name = input("Deck name: ")
+
+                if name in decks:
+
+                    decks[name].add_card()
+
+                else:
+
+                    print("Deck does not exist.")
+
+            # Print the prompt
             print(prompt)
-
             sel = input("Selection: ")
             sel = int(sel)
     
@@ -36,6 +58,7 @@ class Node:
     def __init__(self, front="", back=""):
         """ """
 
+        # Card has a front (question) and back (answer)
         self._front = front
         self._back  = back
 
@@ -44,9 +67,10 @@ class Node:
 class Deck:
     """ """
 
-    def __init__(self):
+    def __init__(self, name="Unamed"):
         """ """
 
+        self._name = name
         self._head = None
 
     def add_card(self):
@@ -74,8 +98,6 @@ class Deck:
     def read_deck(self):
         """ """
         pass
-
-
 
 if __name__ == "__main__":
     main()
