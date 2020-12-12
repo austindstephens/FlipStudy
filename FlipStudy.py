@@ -8,8 +8,8 @@ def main():
     prompt = ("\n0: exit\n"
               "1: create deck\n"
               "2: add card to deck\n"
-              "3: study deck\n"
-              "4: read deck from file\n")
+              "3: read existing deck\n"
+              "4: load deck from file\n")
 
     # Dictionary mapping deck names to Deck instances
     decks = dict()
@@ -37,6 +37,19 @@ def main():
                 if name in decks:
 
                     decks[name].add_card()
+                    print("Card added to \"" + name + "\" deck.")
+
+                else:
+
+                    print("Deck does not exist.")
+
+            elif sel == 3:
+
+                name = input("Deck name: ")
+
+                if name in decks:
+
+                    decks[name].read_deck()
 
                 else:
 
@@ -58,11 +71,12 @@ class Node:
     def __init__(self, front="", back=""):
         """ """
 
-        # Card has a front (question) and back (answer)
-        self._front = front
-        self._back  = back
+        # Card has a front (question) and back (answer); don't
+        # have to be private
+        self.front = front
+        self.back  = back
 
-        next     = None
+        self.next = None
 
 class Deck:
     """ """
@@ -90,14 +104,30 @@ class Deck:
             
             node = self._head
 
-            while node is not None:
+            while node.next is not None:
                 node = node.next
  
-            node = Node(front, back)
+            node.next = Node(front, back)
 
     def read_deck(self):
         """ """
-        pass
+
+        if self._head is None:
+            print("Deck is empty.")
+            return
+
+        node = self._head
+        num  = 1
+
+        while node is not None:
+
+            print("\n" + str(num) + ": " + node.front) 
+            input("Tap any key to see back... ")
+            print(str(num) + ": " + node.back)
+
+            num += 1
+
+            node = node.next
 
 if __name__ == "__main__":
     main()
