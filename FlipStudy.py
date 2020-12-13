@@ -1,133 +1,141 @@
 #
 
 import json
+from deck import Deck
 
 def main():
     """ """
+    # Dictionary mapping deck names to Deck instances; Deck operations
+    # use a linked list data structure
+    decks = dict()
+    
+    try:
+        sel = prompt()
+
+        while sel:
+            # Create a new deck
+            if sel == 1:
+                create_deck(decks)
+            # Add card to an existing deck
+            elif sel == 2:
+                add_card_to_deck(decks)
+            # Reads front and back of cards in a deck
+            elif sel == 3:
+                read_deck(decks)
+            # Reads whatever decks from a json file
+            elif sel == 4:
+                load_decks_from_json(decks)
+            # List all the decks
+            elif sel == 5:
+                list_decks(decks)
+            # Writes all the decks to json
+            elif sel == 6:
+                write_decks_to_json(decks)
+            # Writes all the decks to json and exits
+            elif sel == 10:
+                write_decks_to_json(decks)
+                break
+
+            sel = prompt()
+
+    except ValueError: 
+        print("Invalid input.")
+
+def prompt():
+    """Prints the prompt and takes user's selection;
+    returns the user's selection as integer"""
 
     prompt = ("\n0: exit\n"
               "1: create deck\n"
               "2: add card to deck\n"
               "3: read existing deck\n"
-              "4: load deck from file\n")
+              "4: load decks from json file\n"
+              "5: list decks\n"
+              "6: write decks to json file\n"
+              "7: insert card to deck\n"
+              "8: delete card from deck\n"
+              "9: shuffle cards in deck\n"
+              "10: write decks and exit")
 
-    # Dictionary mapping deck names to Deck instances
-    decks = dict()
+    # Print the prompt
+    print(prompt)
+    sel = input("Selection: ")
     
-    try:
+    return int(sel)
 
-        # Print the prompt
-        print(prompt)
-        sel = input("Selection: ")
-        sel = int(sel)
+def create_deck(decks):
+    """Creates a Deck instance and adds it to the dictionary;
+    takes the decks dictionary and returns nothing"""
 
-        while sel:
+    name = input("Deck name: ")
+    decks[name] = Deck(name) 
 
-            # Create a new deck
-            if sel == 1:
+def add_card_to_deck(decks):
+    """Adds a card to an existing Deck's linked list; takes the decks
+    dictionary and returns nothing"""
 
-                name = input("Deck name: ")
-                decks[name] = Deck(name) 
+    name = input("Deck name: ")
 
-            # Add card to an existing deck
-            elif sel == 2:
+    if name in decks:
+        decks[name].add_card()
+        print("Card added to \"" + name + "\" deck.")
+    else:
+        print("Deck does not exist.")
 
-                name = input("Deck name: ")
+def read_deck(decks):
+    """Reads the front and back of a Deck linked list; takes decks
+    dictionary and returns nothing"""
 
-                if name in decks:
+    name = input("Deck name: ")
 
-                    decks[name].add_card()
-                    print("Card added to \"" + name + "\" deck.")
+    if name in decks:
+        decks[name].read_deck()
+    else:
+        print("Deck does not exist.")
 
-                else:
+def list_decks(decks):
+    """Prints out all the Deck names/instances; takes decks dictionary
+    and returns nothing"""
 
-                    print("Deck does not exist.")
+    print("\nDecks: ")
+    for deck in decks:
+        print(deck)
 
-            elif sel == 3:
+def write_decks_to_json(decks):
+    """Writes all the decks in the decks dictionary to a json
+    file; takes decks dictionary and returns nothing"""
 
-                name = input("Deck name: ")
+    json_decks = dict()
 
-                if name in decks:
+    for deck in decks:
+        # Map the deck name to a dictionary of the linked list
+        front_back = decks[deck].to_dict()
+        json_decks[deck] = front_back
 
-                    decks[name].read_deck()
+    # Add error checking for whether file already exists; don't
+    # want to overwrite data that already exists; FIXME
+    with open("decks.json", "w") as outfile:
+        json.dump(json_decks, outfile, indent=2, sort_keys=True)
 
-                else:
+def load_decks_from_json(decks):
+    """Loads the json data into program using Deck instances and
+    linked list data structure; takes decks instance and returns
+    nothing"""
 
-                    print("Deck does not exist.")
-
-            # Print the prompt
-            print(prompt)
-            sel = input("Selection: ")
-            sel = int(sel)
-    
-    except ValueError:
-        
-        print("Invalid input.")
+    # prompt the user for the while to load
 
 
-class Node:
-    """Node class which Represents a single card in a deck"""
+    # FIXME; add error checking for whether the file exists
+    with open("decks.json", "r") as infile:
+        json_decks = json.load(infile)
 
-    def __init__(self, front="", back=""):
-        """ """
+    for deck in json_decks:
+        # Create a new Deck instance from the deck name in the
+        # json decks file, then load the front/back data into
+        # the program by adding Nodes/Cards to the deck
+        decks[deck] = Deck(deck)
+        decks[deck].to_linked_list(json_decks[deck])
 
-        # Card has a front (question) and back (answer); don't
-        # have to be private
-        self.front = front
-        self.back  = back
-
-        self.next = None
-
-class Deck:
-    """ """
-
-    def __init__(self, name="Unamed"):
-        """ """
-
-        self._name = name
-        self._head = None
-
-    def add_card(self):
-        """Appends a card to the end of the linked list"""
-
-        # Obtain the content of the Card/Node from the user
-        front = input("Front : ")
-        back  = input("Back  : ")
-        
-        # Check if this is first card (None is a falsy)
-        if not self._head:
-
-            self._head = Node(front, back)
-
-        # Otherwise we append it to the end of linked list
-        else:
-            
-            node = self._head
-
-            while node.next is not None:
-                node = node.next
- 
-            node.next = Node(front, back)
-
-    def read_deck(self):
-        """ """
-
-        if self._head is None:
-            print("Deck is empty.")
-            return
-
-        node = self._head
-        num  = 1
-
-        while node is not None:
-
-            print("\n" + str(num) + ": " + node.front) 
-            input("Tap any key to see back... ")
-            print(str(num) + ": " + node.back)
-
-            num += 1
-
-            node = node.next
 
 if __name__ == "__main__":
     main()
