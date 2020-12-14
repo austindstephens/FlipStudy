@@ -11,14 +11,13 @@ class Window:
     def __init__(self, root):
         """Takes root window"""
 
-        # Root window
-        self._root = root
 
         # Dictionary mapping deck names to Deck instances; Deck operations
         # use a linked list data structure
         self._decks = dict()
 
-       # Create window instance
+        # Root window
+        self._root = root
         self._root.geometry("800x600") # Sets window size
         self._root.title("Flip Study")
 
@@ -79,8 +78,7 @@ class Window:
             on the root window; takes and returns nothing"""
             name = ent.get()
             self._decks[name] = Deck(name)
-            self._cmb["values"] += (name,) # cancat as tuple
-            self._cmb.current(0)
+            self._lbx.insert(tk.END, name)
             wnd.destroy()
 
         wnd = tk.Toplevel(self._root)
