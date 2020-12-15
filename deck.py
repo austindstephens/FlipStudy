@@ -9,12 +9,12 @@ class Deck:
 
         self._name = name
         self._head = None
+        self._length = 0
+
 
     def add_card(self):
         """Appends a card to the end of the linked list"""
         # Obtain the content of the Card/Node from the user
-        front = input("Front : ")
-        back  = input("Back  : ")
         
         # Check if this is first card (None is a falsy)
         if not self._head:
@@ -28,23 +28,32 @@ class Deck:
  
             card.next = Card(front, back)
 
-    def read_deck(self):
-        """ """
+        self._length += 1
+
+    def get_card(self, pos):
+        """Returns tuple of front and back of card given an integer
+        position in linked list"""
+
         if self._head is None:
-            print("Deck is empty.")
-            return
+            return ""
 
         card = self._head
-        num  = 1
 
-        while card is not None:
-            print("\n" + str(num) + ": " + card.front) 
-            input("Tap any key to see back... ")
-            print(str(num) + ": " + card.back)
+        i = 0
 
-            num += 1
-
+        # Get to the desired card/node; card should never be None
+        while i < pos:
             card = card.next
+            i += 1
+
+        return (card.front, card.back)
+
+
+    def get_length(self):
+        """Takes nothing and returns number of cards/nodes in
+        linked list"""
+
+        return self._length
 
     def to_dict(self):
         """Creates a dictionary out of front and back content of all
@@ -101,5 +110,8 @@ class Deck:
             card = card.next
 
             i += 1
+
+        # Number of cards/nodes corresponds to length of front/back
+        self._length = len(json_deck["front"])
 
 

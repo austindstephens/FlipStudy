@@ -1,3 +1,5 @@
+# FIXME fix and condense stuff
+
 import json
 import tkinter as tk
 from tkinter import ttk
@@ -18,18 +20,28 @@ class Window:
 
         # Root window
         self._root = root
-        self._root.geometry("800x600") # Sets window size
+        self._root.geometry("600x400") # Sets window size
         self._root.title("Flip Study")
 
         # Frames
         self._frame1 = tk.Frame(master=self._root,
-                borderwidth=2, relief="sunken")
+                borderwidth=2, relief="raised")
 
         self._frame2 = tk.Frame(master=self._root,
-                borderwidth=2, relief="ridge")
+                borderwidth=2)
 
-        self._frame3 = tk.Frame(master=self._root,
-                borderwidth=2, relief="ridge")
+        # Menu; don't have to handle geometry
+        self._men = tk.Menu(self._root)
+        self._root.config(menu=self._men)
+
+        self._fileMenu = tk.Menu(master=self._men, tearoff=0)
+        self._men.add_cascade(label="File", menu=self._fileMenu)
+
+        self._fileMenu.add_command(label="Open...") # will add file menu for jsons
+        self._fileMenu.add_command(label="Save as...")
+
+        self._fileMenu.add_separator()
+        self._fileMenu.add_command(label="Exit", command=root.quit) # exit
 
         # Buttons
         self._btn1 = tk.Button(text="Create New Deck",
@@ -37,7 +49,7 @@ class Window:
 
         self._btn2 = tk.Button(text="Modify Deck", master=self._frame1,
                 command=self.modify_deck)
-        self._btn3 = tk.Button(text="View Deck", master=self._frame1)
+        self._btn3 = tk.Button(text="Study Deck", master=self._frame1)
 
         self._btn4 = tk.Button(text="Load Decks From Json",
                 master=self._frame1, command=self.load_decks_from_json)
@@ -45,28 +57,27 @@ class Window:
                 master=self._frame1, command=self.write_decks_to_json)
 
         # Scrollable listbox
-        self._lbx  = tk.Listbox(master=self._frame2)
+        self._lbx  = tk.Listbox(master=self._frame2, height=20, width=40)
         self._sbr  = tk.Scrollbar(master=self._frame2)
 
         self._lbx.config(yscrollcommand = self._sbr.set)
         self._sbr.config(command = self._lbx.yview)
         
         # Labels
-
-        self._lbl = tk.Label(master=self._frame3, text="Decks")
+        self._lbl = tk.Label(master=self._frame2, text="Decks")
 
         # Pack
-        self._frame1.pack(side=tk.TOP) 
-        self._frame2.pack(side=tk.BOTTOM)
-        self._frame3.pack(side=tk.BOTTOM)
 
-        self._btn1.pack()
-        self._btn2.pack()
-        self._btn3.pack()
-        self._btn4.pack()
-        self._btn5.pack()
+        self._frame1.grid(column=0, row=0, padx=10) 
+        self._frame2.grid(column=1, row=0)
 
-        self._lbl.pack(side=tk.LEFT)
+        self._btn1.pack(pady=10)
+        self._btn2.pack(pady=10)
+        self._btn3.pack(pady=10)
+        self._btn4.pack(pady=10)
+        self._btn5.pack(pady=10)
+
+        self._lbl.pack(side=tk.TOP)
         self._lbx.pack(side=tk.LEFT, fill=tk.BOTH)
         self._sbr.pack(side=tk.RIGHT, fill=tk.BOTH)
 
@@ -98,9 +109,7 @@ class Window:
         linked list data structure; takes decks instance and returns
         nothing"""
 
-        # prompt the user for the file to load
-
-        # FIXME; add error checking for whether the file exists
+        # will add file selector later
         with open("decks.json", "r") as infile:
             json_decks = json.load(infile)
 
@@ -111,10 +120,10 @@ class Window:
             self._decks[deck] = Deck(deck)
             self._decks[deck].to_linked_list(json_decks[deck])
 
-            # Add the deck to the combobox list on the root window
+            # Add the deck to the listbox on the root window
             self._lbx.insert(tk.END, deck)
 
-        tk.messagebox.showinfo("Decks Loaded",
+        messagebox.showinfo("Decks Loaded",
                 "Decks successfully loaded from json file.") 
 
 
@@ -129,21 +138,95 @@ class Window:
             front_back = self._decks[deck].to_dict()
             json_decks[deck] = front_back
 
-        # Add error checking for whether file already exists; don't
-        # want to overwrite data that already exists; FIXME
+        # will add file selector later
         with open("decks.json", "w") as outfile:
             json.dump(json_decks, outfile, indent=2, sort_keys=True)
 
-        tk.messagebox.showinfo("Decks Written",
+        messagebox.showinfo("Decks Written",
                 "Decks successfully written to json file.")
 
     def modify_deck(self):
         """Allows the user to modify a deck; takes and returns nothing"""
 
+
+        # Get current selection from the listbox on root window
+        deck = self._lbx.get(tk.ANCHOR)
+
+        # Show error if no deck selected on root window
+        if(not deck):
+            messagebox.showerror("No Deck Selected",
+                    "You must select a deck to modify.")
+            return
+
+        # Window
         wnd = tk.Toplevel(self._root)
         wnd.title("Modify Deck")
 
         wnd.geometry("800x600")
+
+        # Frames
+        frame1 = tk.Frame(master=wnd, relief="sunken") # buttons
+        frame2 = tk.Frame(master=wnd, height=200, width=300) # front text box
+        frame3 = tk.Frame(master=wnd, height=200, width=300) # back text box
+        frame4 = tk.Frame(master=wnd, relief="sunken", borderwidth=2) # Listbox
+
+        # Buttons
+        btn1 = tk.Button(master=frame1, text="Add Card")
+        btn2 = tk.Button(master=frame1, text="Update")
+        btn3 = tk.Button(master=frame1, text="Delete")
+
+        # Text
+        txt1 = tk.Text(master=frame2, width=40, height=10) # front
+        txt2 = tk.Text(master=frame3, width=40, height=10) # back
+
+        # Scrollable listbox
+        lbx  = tk.Listbox(master=frame4)
+        sbr  = tk.Scrollbar(master=frame4)
+
+        lbx.config(yscrollcommand = sbr.set)
+        sbr.config(command = lbx.yview)
+        
+        # Packing
+        frame1.grid(column=1, row=2, padx=20, pady=20) # buttons
+        frame2.grid(column=1, row=0, padx=20) # front text box
+        frame3.grid(column=1, row=1) # back text box
+        frame4.grid(column=0, row=0, padx=20, pady=20) # listbox
+
+
+        btn1.pack(side=tk.LEFT, padx=10)
+        btn2.pack(side=tk.LEFT, padx=10)
+        btn3.pack(side=tk.LEFT, padx=10)
+
+        txt1.pack()
+        txt2.pack()
+
+        lbx.pack(side=tk.LEFT, fill=tk.BOTH)
+        sbr.pack(side=tk.RIGHT, fill=tk.BOTH)
+
+        # Seems event we need to have a param here, "event";
+        # don't have to use it
+        def update_text(event):
+            """ """
+
+            card_sel = lbx.curselection()[0] # get index of current selection
+            content = self._decks[deck].get_card(card_sel) # tuple front/back
+
+            txt1.delete("1.0", tk.END)
+            txt2.delete("1.0", tk.END)
+
+            txt1.insert(tk.END, content[0])
+            txt2.insert(tk.END, content[1])
+
+
+        # Bind selection event with the listbox to a function
+        # that updates the text widgets with that card's content
+        lbx.bind("<<ListboxSelect>>", update_text)
+
+        # List the card numbers in listbox
+        num = self._decks[deck].get_length()
+
+        for i in range(0, num):
+            lbx.insert(tk.END, "card " + str(i))
 
 
 def main():
@@ -152,32 +235,6 @@ def main():
     root   = tk.Tk()
     window = Window(root) # Do all window stuff in this class
     root.mainloop()
-
-
-def add_card_to_deck(decks):
-    """Adds a card to an existing Deck's linked list; takes the decks
-    dictionary and returns nothing"""
-
-    name = input("Deck name: ")
-
-    if name in decks:
-        decks[name].add_card()
-        print("Card added to \"" + name + "\" deck.")
-    else:
-        print("Deck does not exist.")
-
-def read_deck(decks):
-    """Reads the front and back of a Deck linked list; takes decks
-    dictionary and returns nothing"""
-
-    name = input("Deck name: ")
-
-    if name in decks:
-        decks[name].read_deck()
-    else:
-        print("Deck does not exist.")
-
-
 
 if __name__ == "__main__":
     main()
