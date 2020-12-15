@@ -51,13 +51,15 @@ class Window:
                 command=self.modify_deck)
         self._btn3 = tk.Button(text="Study Deck", master=self._frame1)
 
+        # Delete these and add a delete deck button, maybe
         self._btn4 = tk.Button(text="Load Decks From Json",
                 master=self._frame1, command=self.load_decks_from_json)
         self._btn5 = tk.Button(text="Write Decks to Json",
                 master=self._frame1, command=self.write_decks_to_json)
 
         # Scrollable listbox
-        self._lbx  = tk.Listbox(master=self._frame2, height=20, width=40)
+        self._lbx  = tk.Listbox(master=self._frame2, height=20, width=40,
+                exportselection=False)
         self._sbr  = tk.Scrollbar(master=self._frame2)
 
         self._lbx.config(yscrollcommand = self._sbr.set)
@@ -123,9 +125,6 @@ class Window:
             # Add the deck to the listbox on the root window
             self._lbx.insert(tk.END, deck)
 
-        messagebox.showinfo("Decks Loaded",
-                "Decks successfully loaded from json file.") 
-
 
     def write_decks_to_json(self):
         """Writes all the decks in the decks dictionary to a json
@@ -158,6 +157,46 @@ class Window:
                     "You must select a deck to modify.")
             return
 
+        def append_card():
+            """ a card to the deck"""
+
+            # append the card to end of linked list
+            self._decks[deck].append_card()
+
+            # update the card listbox
+            length = self._decks[deck].get_length()
+            length = length if length == 0 else length - 1
+            
+            lbx.insert(tk.END, "card " + str(length))
+
+        # Seems we need to have a param here, "event";
+        # don't have to use it
+        def display_content(event):
+            """ """
+
+            # Check if nothing is in listbox; empty tuple is a falsy
+            if not lbx.curselection():
+                return
+
+            pos     = lbx.curselection()[0] # get index of current selection
+            content = self._decks[deck].get_card(pos) # tuple front/back
+
+            txt1.delete("1.0", tk.END)
+            txt2.delete("1.0", tk.END)
+            
+            txt1.insert(tk.END, content[0])
+            txt2.insert(tk.END, content[1])
+
+        def update_content():
+            """ """
+
+            # Get the content excluding the added new line character
+            new = (txt1.get("0.0", "end-1c"), txt2.get("0.0", "end-1c"))
+            pos = lbx.curselection()[0]
+            self._decks[deck].set_node(new, pos)
+
+
+
         # Window
         wnd = tk.Toplevel(self._root)
         wnd.title("Modify Deck")
@@ -171,8 +210,10 @@ class Window:
         frame4 = tk.Frame(master=wnd, relief="sunken", borderwidth=2) # Listbox
 
         # Buttons
-        btn1 = tk.Button(master=frame1, text="Add Card")
-        btn2 = tk.Button(master=frame1, text="Update")
+        btn1 = tk.Button(master=frame1, text="Add Card",
+                command=append_card)
+        btn2 = tk.Button(master=frame1, text="Update",
+                command=update_content)
         btn3 = tk.Button(master=frame1, text="Delete")
 
         # Text
@@ -180,18 +221,24 @@ class Window:
         txt2 = tk.Text(master=frame3, width=40, height=10) # back
 
         # Scrollable listbox
-        lbx  = tk.Listbox(master=frame4)
+        lbx  = tk.Listbox(master=frame4, exportselection=False)
         sbr  = tk.Scrollbar(master=frame4)
 
         lbx.config(yscrollcommand = sbr.set)
         sbr.config(command = lbx.yview)
+        
+        lbx.bind("<<ListboxSelect>>", display_content) # bind event to show text
+        
+        num = self._decks[deck].get_length() # list card # in listbox
+
+        for i in range(0, num):
+            lbx.insert(tk.END, "card " + str(i))
         
         # Packing
         frame1.grid(column=1, row=2, padx=20, pady=20) # buttons
         frame2.grid(column=1, row=0, padx=20) # front text box
         frame3.grid(column=1, row=1) # back text box
         frame4.grid(column=0, row=0, padx=20, pady=20) # listbox
-
 
         btn1.pack(side=tk.LEFT, padx=10)
         btn2.pack(side=tk.LEFT, padx=10)
@@ -203,30 +250,9 @@ class Window:
         lbx.pack(side=tk.LEFT, fill=tk.BOTH)
         sbr.pack(side=tk.RIGHT, fill=tk.BOTH)
 
-        # Seems event we need to have a param here, "event";
-        # don't have to use it
-        def update_text(event):
-            """ """
-
-            card_sel = lbx.curselection()[0] # get index of current selection
-            content = self._decks[deck].get_card(card_sel) # tuple front/back
-
-            txt1.delete("1.0", tk.END)
-            txt2.delete("1.0", tk.END)
-
-            txt1.insert(tk.END, content[0])
-            txt2.insert(tk.END, content[1])
 
 
-        # Bind selection event with the listbox to a function
-        # that updates the text widgets with that card's content
-        lbx.bind("<<ListboxSelect>>", update_text)
 
-        # List the card numbers in listbox
-        num = self._decks[deck].get_length()
-
-        for i in range(0, num):
-            lbx.insert(tk.END, "card " + str(i))
 
 
 def main():

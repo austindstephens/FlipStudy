@@ -7,41 +7,56 @@ class Deck:
     def __init__(self, name):
         """ """
 
-        self._name = name
-        self._head = None
+        self._name   = name
+        self._head   = None
         self._length = 0
 
-
-    def add_card(self):
+    def append_card(self):
         """Appends a card to the end of the linked list"""
-        # Obtain the content of the Card/Node from the user
-        
-        # Check if this is first card (None is a falsy)
-        if not self._head:
-            self._head = Card(front, back)
-        # Otherwise we append it to the end of linked list
-        else: 
-            card = self._head
 
-            while card.next is not None:
-                card = card.next
+        if self._head is None:
+            self._head = Card()
+            self._length += 1
+            return
+
+        card = self._head
+
+        while card.next is not None:
+            card = card.next
  
-            card.next = Card(front, back)
+        card.next = Card()
 
         self._length += 1
+
+    def set_node(self, content, pos):
+        """Takes a tuple containing front and back
+        content and pos specifycing which node to set; takes and
+        returns nothing"""
+
+        # head node should never be None
+        card = self._head
+        i = 0
+
+        # Get to card in linked list
+        while i < pos:
+            card = card.next
+            i += 1
+
+        # Set the new front and back content
+        card.front = content[0]
+        card.back  = content[1]
+
 
     def get_card(self, pos):
         """Returns tuple of front and back of card given an integer
         position in linked list"""
 
-        if self._head is None:
-            return ""
-
         card = self._head
 
         i = 0
 
-        # Get to the desired card/node; card should never be None
+        # Get to the desired card/node; head should never be None
+        # since a head node has to exist for it to be in the listbox
         while i < pos:
             card = card.next
             i += 1
@@ -56,22 +71,22 @@ class Deck:
         return self._length
 
     def to_dict(self):
-        """Creates a dictionary out of front and back content of all
-        cards; takes nothing and returns a list of the front content"""
+        """For creating json file; Creates a dictionary out of front
+        and back content of all cards; takes nothing and returns a
+        list of the front content"""
 
-        #FIXME maybe come up with a new format than two separate lists
-        # for front and back content?
+        # FIXME; improve this
+
+        front_back = {"front": [], "back": []}
 
         if self._head is None:
-            return {}
-
-        front_back = dict()  
-        front_back = {"front": [], "back": []}
+            front_back["front"] = [""]
+            front_back["back"]  = [""]
+            return front_back
 
         card = self._head
 
         while card is not None:
-
             front_back["front"].append(card.front)
             front_back["back"].append(card.back)
 
@@ -80,14 +95,9 @@ class Deck:
         return front_back
 
     def to_linked_list(self, json_deck):
-        """Loads the decks from a json file into the program as
-        linked list; takes a json decks dictionary and returns
-        nothin"""
-
-        # Check if there is data to load
-        if "front" not in json_deck:
-            print(self._name + " has no data from json file.")
-            return
+        """For loading jsons; loads the decks from json file into
+        the program as linked list; takes a json decks dictionary
+        and returns nothing"""
 
         # The head node should be None since this is a deck loaded
         # from a json file
