@@ -28,7 +28,7 @@ class Deck:
 
         self._length += 1
 
-    def set_node(self, content, pos):
+    def set_card(self, content, pos):
         """Takes a tuple containing front and back
         content and pos specifycing which node to set; takes and
         returns nothing"""
@@ -46,6 +46,28 @@ class Deck:
         card.front = content[0]
         card.back  = content[1]
 
+    def delete_card(self, pos):
+        """ """
+
+        if pos == 0:
+            # If head points to None then we'll have just
+            # an empty linked list
+            self._head = self._head.next
+            self._length -= 1
+            return
+
+        # Card stays one behind the index value so that deleting
+        # target node can be done by simply setting the node pointing
+        # to the target node to point to what the target node points to 
+        i = 1 
+        card = self._head
+        
+        while i < pos:
+            card = card.next
+            i += 1
+
+        card.next = card.next.next
+        self._length -= 1
 
     def get_card(self, pos):
         """Returns tuple of front and back of card given an integer
