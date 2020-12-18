@@ -1,24 +1,25 @@
-# FIXME fix stuff and improve structure/condense
+#!/usr/bin/python
 
 import json
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
 
 from deck import Deck
 
 class RootListboxFrame(tk.Frame):
     """ """
     
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent):
         """ """
 
         # Super class' init method; master of frame is parent
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+        tk.Frame.__init__(self, parent)
 
         self._parent = parent
 
-        self["borderwidth"] = 2
+        self["borderwidth"] = 4
         self["relief"]      = tk.RAISED
 
         # Scrollable listbox
@@ -43,30 +44,27 @@ class RootListboxFrame(tk.Frame):
 class RootButtonFrame(tk.Frame):
     """ """
 
-    def __init__(self, parent, deck, lbx, *args, **kwargs):
+    def __init__(self, parent, decks, lbx):
         """ """
 
         # Super class' init method; master of frame is parent
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+        tk.Frame.__init__(self, parent)
 
         self._parent = parent
         self._lbx    = lbx
-        self._decks  = deck
+        self._decks  = decks
 
-        self["borderwidth"] = 2
+        self["borderwidth"] = 4
         self["relief"]      = tk.RAISED
 
-        btn_str = ["Create New Deck", "Modify Deck", "Study Deck",
-                "Load Decks From Json", "Write Decks to Json"]
 
-        btn_cmd = [self.create_deck, self.modify_deck, None,
-                self.load_decks_from_json, self.write_decks_to_json]
+        btn_str = ["Create Deck", "Modify Deck", "Delete Deck", "Study Deck"]
 
-        for i in range(5):
-            # pack() would expect a widget like a Button instance;
-            # we don't need to assign the instance to a variable
+        btn_cmd = [self.create_deck, self.modify_deck, self.delete_deck, None]
+
+        for i in range(4):
             tk.Button(text=btn_str[i], master=self,
-                command=btn_cmd[i]).pack(pady=5)
+                    command=btn_cmd[i]).pack(pady=5)
 
     def create_deck(self):
         """Create deck dialog window; takes and returns nothing"""
@@ -88,43 +86,16 @@ class RootButtonFrame(tk.Frame):
         
         ModifyDeckWindow(self._decks, self._lbx, deck) # window instance
 
+    def delete_deck(self):
+        """ """
 
-    def load_decks_from_json(self):
-        """Loads the json data into program using Deck instances and
-        linked list data structure; takes decks instance and returns
-        nothing"""
+        # delete the key-value pair in the dicitonary mapping deck name
+        # to Deck object
+        deck = self._lbx.get(tk.ANCHOR)
+        self._decks.pop(deck)
 
-        # will add file selector later
-        with open("decks.json", "r") as infile:
-            json_decks = json.load(infile)
-
-        for deck in json_decks:
-            # Create a new Deck instance from the deck name in the
-            # json decks file, then load the front/back data into
-            # the program by adding Nodes/Cards to the deck
-            self._decks[deck] = Deck(deck)
-            self._decks[deck].to_linked_list(json_decks[deck])
-
-            # Add the deck to the listbox on the root window
-            self._lbx.insert(tk.END, deck)
-
-    def write_decks_to_json(self):
-        """Writes all the decks in the decks dictionary to a json
-        file; takes decks dictionary and returns nothing"""
-
-        json_decks = dict()
-
-        for deck in self._decks:
-            # Map the deck name to a dictionary of the linked list
-            front_back       = self._decks[deck].to_dict()
-            json_decks[deck] = front_back
-
-        # will add file selector later
-        with open("decks.json", "w") as outfile:
-            json.dump(json_decks, outfile, indent=2, sort_keys=True)
-
-        messagebox.showinfo("Decks Written",
-                "Decks successfully written to json file.")
+        # update listbox to reflect deleted deck
+        self._lbx.delete(tk.ANCHOR)
 
 class CreateDeckWindow(tk.Toplevel):
     """ """
@@ -150,7 +121,7 @@ class CreateDeckWindow(tk.Toplevel):
         name = self._ent.get()
         self._decks[name] = Deck(name)
         self._lbx.insert(tk.END, name)  
-        self.destroy() # self destruct!
+        self.destroy()
 
 
 class DeckButtonFrame(tk.Frame):
@@ -164,10 +135,10 @@ class DeckButtonFrame(tk.Frame):
         self._decks      = decks
         self._name       = name
         self._lbx        = lbx
-        self._front_text = front
-        self._back_text  = back
+        self._front_text, self._back_text = front, back
 
-        self["relief"] = "sunken"
+        self["relief"]      = "raised"
+        self["borderwidth"] = 4
 
         btn_cmd = [self.append_card, self.update_card, self.delete_card]
         btn_str = ["Add Card", "Update", "Delete"]
@@ -192,7 +163,7 @@ class DeckButtonFrame(tk.Frame):
     def delete_card(self):
         """ """
 
-        # Check if nothing is in listbox; empty tuple is a falsy
+        # Check if nothing is selected in listbox; empty tuple is a falsy
         if not self._lbx.curselection():
             return
         
@@ -210,13 +181,22 @@ class DeckButtonFrame(tk.Frame):
         for i in range(pos, length):
             self._lbx.insert(tk.END, "card " + str(i))
 
+        # Delete the left-over contents in the text widgets
+        self._front_text.delete("0.0", tk.END)
+        self._back_text.delete("0.0", tk.END)
+
     def update_card(self):
         """ """
+
+        # Check if nothing is selected in listbox; empty tuple is a falsy
+        if not self._lbx.curselection():
+            return
 
         # Get the content excluding the added new line character
         new = (self._front_text.get("0.0", "end-1c"),
                 self._back_text.get("0.0", "end-1c"))
         pos = self._lbx.curselection()[0]
+
         self._decks[self._name].set_card(new, pos)
 
 class DeckTextFrame(tk.Frame):
@@ -226,12 +206,17 @@ class DeckTextFrame(tk.Frame):
         """ """
         tk.Frame.__init__(self, parent)
 
-        self["height"] = "200"
-        self["width"]  = "300"
+        self["height"]      = "200"
+        self["width"]       = "300"
+        self["borderwidth"] = 4
+        self["relief"]      = "raised"
 
         self._front = tk.Text(master=self, width=40, height=10)
         self._back  = tk.Text(master=self, width=40, height=10)
-        self._front.pack(pady=10)
+        
+        tk.Label(master=self, text="Front").pack(side=tk.TOP, fill=tk.BOTH)
+        self._front.pack() 
+        tk.Label(master=self, text="Back").pack(fill=tk.BOTH)
         self._back.pack()
     
     def get_front_text(self):
@@ -250,22 +235,22 @@ class DeckListboxFrame(tk.Frame):
 
         tk.Frame.__init__(self, parent)
 
-        self["relief"]      = "sunken"
-        self["borderwidth"] = 2
+        self["relief"]      = "raised"
+        self["borderwidth"] = 4
         
         self._decks      = decks
         self._name       = name
-        self._front_text = front
-        self._back_text  = back
+        self._front_text, self._back_text = front, back
 
-        self._lbx = tk.Listbox(master=self, exportselection=False)
+        self._lbx = tk.Listbox(master=self, exportselection=False, height="15")
         self._sbr = tk.Scrollbar(master=self)
 
         self._lbx.config(yscrollcommand=self._sbr.set)
         self._sbr.config(command=self._lbx.yview)
         
         self._lbx.bind("<<ListboxSelect>>", self.display_content) # bind event to show text
-        
+
+        tk.Label(master=self, text="Cards").pack(side=tk.TOP, fill=tk.BOTH)
         self._lbx.pack(side=tk.LEFT, fill=tk.BOTH)
         self._sbr.pack(side=tk.RIGHT, fill=tk.BOTH)
 
@@ -308,7 +293,11 @@ class ModifyDeckWindow(tk.Toplevel):
         self._lbx   = lbx # root window listbox; deck names
 
         self.title("Modify Deck")
-        self.geometry("700x500")
+
+        wnd_x = self.winfo_screenwidth() / 2 - (600 / 2) 
+        wnd_y = self.winfo_screenheight() / 2 - (600 / 2)
+        
+        self.geometry("700x500+%d+%d" %(wnd_x, wnd_y))
 
         self._txt      = DeckTextFrame(self)
         self._card_lbx = DeckListboxFrame(self, self._decks,
@@ -320,10 +309,15 @@ class ModifyDeckWindow(tk.Toplevel):
                 self._txt.get_back_text(), self._name)
         
         # Packing
-        self._btn.grid(column=1, row=2, padx=20, pady=20) # buttons
-        self._txt.grid(column=1, row=0, padx=20) # text widgets
-        self._card_lbx.grid(column=0, row=0, padx=20, pady=20) # listbox
+        self._btn.grid(column=1, row=1, sticky="") # buttons
+        self._txt.grid(column=1, row=0, sticky="") # text widgets
+        self._card_lbx.grid(column=0, row=0, sticky="") # listbox
 
+        # Make a polymorphic function
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
 # not a frame
 class MainApplication():
@@ -338,16 +332,27 @@ class MainApplication():
 
         # Root window
         self._parent = parent
-        self._parent.geometry("600x420") # Sets window size
+
+        screen_x = self._parent.winfo_screenwidth() / 2 - (600 / 2)
+        screen_y = self._parent.winfo_screenheight() / 2 - (420 / 2)
+
+        self._parent.geometry("600x420+%d+%d" %(screen_x, screen_y)) # Sets window size
         self._parent.title("Flip Study")
 
         self.init_menu()
 
-        self._lbx = RootListboxFrame(self._parent)
-        self._btn = RootButtonFrame(self._parent, self._decks, self._lbx.get_lbx())
+        self._lbx_frame = RootListboxFrame(self._parent)
+        self._btn_frame = RootButtonFrame(self._parent, self._decks,
+                self._lbx_frame.get_lbx())
 
-        self._btn.grid(column=0, row=0, padx=20)
-        self._lbx.grid(column=1, row=0, pady=10)
+        self._btn_frame.grid(column=0, row=0, sticky="")
+        self._lbx_frame.grid(column=1, row=0, pady=30, sticky="")
+
+        # Make a polymorphic function
+        self._parent.grid_columnconfigure(0, weight=1)
+        self._parent.grid_columnconfigure(1, weight=1)
+        self._parent.grid_rowconfigure(0, weight=1)
+        self._parent.grid_rowconfigure(1, weight=1)
 
 
     def init_menu(self):
@@ -356,15 +361,66 @@ class MainApplication():
         men = tk.Menu(self._parent)
         self._parent.config(menu=men)
 
-        fileMenu = tk.Menu(master=men, tearoff=0)
-        men.add_cascade(label="File", menu=fileMenu)
+        file_menu = tk.Menu(master=men, tearoff=0)
+        men.add_cascade(label="File", menu=file_menu)
 
-        fileMenu.add_command(label="Open...") # will add file menu for jsons
-        fileMenu.add_command(label="Save as...")
+        file_menu.add_command(label="Open...", command=self.load_from_json)
+        file_menu.add_command(label="Save as...", command=self.write_to_json)
 
-        fileMenu.add_separator()
-        fileMenu.add_command(label="Exit", command=self._parent.quit) # exit
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self._parent.quit) # exit
 
+    def load_from_json(self):
+        """Loads the json data into program using Deck instances and
+        linked list data structure; takes decks instance and returns
+        nothing"""
+
+        # Returns path to file
+        file_name = filedialog.askopenfilename(initialdir="./",
+                filetypes=[("Json files", ".json")], multiple=False)
+        
+        # Return if None; happens if dialog is opened and then closed;
+        # returns an empty tuple in that case which is a falsy
+        if not file_name:
+            return
+        
+        with open(file_name, "r") as infile:
+            json_decks = json.load(infile)
+
+        for deck in json_decks:
+            # Create a new Deck instance from the deck name in the
+            # json decks file, then load the front/back data into
+            # the program by adding Nodes/Cards to the deck
+            self._decks[deck] = Deck(deck)
+            self._decks[deck].to_linked_list(json_decks[deck])
+
+            # Add the deck to the listbox on the root window
+            self._lbx_frame.get_lbx().insert(tk.END, deck)
+
+    def write_to_json(self):
+        """Writes all the decks in the decks dictionary to a json
+        file; takes decks dictionary and returns nothing"""
+
+        # Returns a file object
+        fileObj = filedialog.asksaveasfile(
+                filetypes=[("Json files", ".json")],
+                defaultextension=[("Json files", ".json")])
+
+        if not fileObj:
+            return
+
+        json_decks = dict()
+
+        for deck in self._decks:
+            # Map the deck name to a dictionary of the linked list
+            front_back       = self._decks[deck].to_dict()
+            json_decks[deck] = front_back
+
+        json.dump(json_decks, fileObj, indent=2, sort_keys=True)
+        fileObj.close()
+
+        messagebox.showinfo("Decks Written",
+                "Decks successfully written to json.")
 
 if __name__ == "__main__":
     """ """
@@ -372,4 +428,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     MainApplication(root)
     root.mainloop()
-
