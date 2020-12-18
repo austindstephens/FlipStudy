@@ -294,8 +294,8 @@ class ModifyDeckWindow(tk.Toplevel):
 
         self.title("Modify Deck")
 
-        wnd_x = self.winfo_screenwidth() / 2 - (600 / 2) 
-        wnd_y = self.winfo_screenheight() / 2 - (600 / 2)
+        wnd_x = self.winfo_screenwidth() / 2 - (700 / 2) 
+        wnd_y = self.winfo_screenheight() / 2 - (500 / 2)
         
         self.geometry("700x500+%d+%d" %(wnd_x, wnd_y))
 
