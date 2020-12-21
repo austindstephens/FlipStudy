@@ -6,7 +6,6 @@
 
 import tkinter as tk
 from main_window import MainWindow
-#from tkinter import ttk
 
 if __name__ == "__main__":
     """ """
